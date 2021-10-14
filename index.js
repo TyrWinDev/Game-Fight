@@ -1,77 +1,33 @@
-const fetchData = async (searchTerm) => {
-  const response = await axios.get(
-    "https://www.cheapshark.com/api/1.0/games?",
-    {
-      params: {
-        title: searchTerm,
-        limit: 10,
-      },
-    }
-  );
-
-  return response.data;
-};
-
-const root = document.querySelector(".autocomplete");
-root.innerHTML = `
-  <label><b>Search for a Game</b></label>
-  <input class="input" />
-  <div class="dropdown">
-    <div class="dropdown-menu">
-      <div class="dropwdown-content results">
-      </div>
-    </div>
-  </div>
-`;
-
-const input = document.querySelector("input");
-const dropdown = document.querySelector(".dropdown");
-const resultsWrapper = document.querySelector(".results");
-
-const onInput = async (e) => {
-  const games = await fetchData(e.target.value);
-
-  if (!games.length) {
-    dropdown.classList.remove("is-active");
-    return;
-  }
-
-  resultsWrapper.innerHTML = "";
-  dropdown.classList.add("is-active");
-  for (let game of games) {
-    const option = document.createElement("a");
+createAutoComplete({
+  root: document.querySelector(".autocomplete"),
+  renderOption(game) {
     const imgSRC = game.thumb === "N/A" ? " " : game.thumb;
+    return `
+    <img src="${imgSRC}" />
+    ${game.external}
+    ${game.cheapest}
+  `;
+  },
+  onOptionSelect(game) {
+    onGameSelect(game);
+  },
+  inputValue(game) {
+    return game.external;
+  },
+  async fetchData(searchTerm) {
+    const response = await axios.get(
+      "https://www.cheapshark.com/api/1.0/games?",
+      {
+        params: {
+          title: searchTerm,
+          limit: 10,
+        },
+      }
+    );
 
-    option.classList.add("dropdown-item");
-    option.innerHTML = `
-      <img src="${imgSRC}" />
-      ${game.external}
-      ${game.cheapest}
-      
-    `;
-
-    option.addEventListener("click", () => {
-      dropdown.classList.remove("is-active");
-      input.value = game.external;
-      onGameSelect(game);
-    });
-
-    resultsWrapper.appendChild(option);
-  }
-};
-
-input.addEventListener("input", debounce(onInput, 500));
-
-document.addEventListener("click", (e) => {
-  if (!root.contains(e.target)) {
-    dropdown.classList.remove("is-active");
-  }
+    return response.data;
+  },
 });
-
-//REMEMBER TO PUT BUTTON BACK LATER!!!!!!
-{
-  /* <input type="button" onclick="location.href='https://www.cheapshark.com/redirect?dealID=${game.cheapestDealID}';" value=" Go to Deal" /> */
-}
 
 const onGameSelect = async (game) => {
   const response = await axios.get(
@@ -96,11 +52,25 @@ const gameTemplate = (gameDetail) => {
         </p>
       </figure>
       <div class='media-content'>
+        <div class='content'>
         <h1>${gameDetail.info.title}</h1>
+        <h5>Game Genre goes here...</h5>
         <h4>${gameDetail.deals[0].price}</h4>
+        <p>Add to Favorites</p>
         
-        <p></p>
+        <p>Game summary goes here...</p>
+
+        <input type="button" onclick="location.href='https://www.cheapshark.com/redirect?dealID=${gameDetail.deals[0].dealID}';" value=" Get this Deal!" /> 
+        </div>
       </div>
+    </article>
+    <article class="notification is-primary">
+      <p class='title'>Steam or metacritic score goes here...</p>
+      <p class='subtitle'>Rating</p>
+    </article>
+    <article class="notification is-primary">
+      <p class='title'>Gameplay Trailer goes here</p>
+      <p class='subtitle'>Gameplay</p>
     </article>
   `;
 };
