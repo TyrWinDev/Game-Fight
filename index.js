@@ -1,5 +1,4 @@
-createAutoComplete({
-  root: document.querySelector(".autocomplete"),
+const autoCompleteConfig = {
   renderOption(game) {
     const imgSRC = game.thumb === "N/A" ? " " : game.thumb;
     return `
@@ -7,9 +6,6 @@ createAutoComplete({
     ${game.external}
     ${game.cheapest}
   `;
-  },
-  onOptionSelect(game) {
-    onGameSelect(game);
   },
   inputValue(game) {
     return game.external;
@@ -27,9 +23,28 @@ createAutoComplete({
 
     return response.data;
   },
+};
+
+createAutoComplete({
+  ...autoCompleteConfig,
+  root: document.querySelector("#left-autocomplete"),
+  onOptionSelect(game) {
+    document.querySelector(".tutorial").classList.add("is-hidden");
+    onGameSelect(game, document.querySelector("#left-summary"), "left");
+  },
+});
+createAutoComplete({
+  ...autoCompleteConfig,
+  root: document.querySelector("#right-autocomplete"),
+  onOptionSelect(game) {
+    document.querySelector(".tutorial").classList.add("is-hidden");
+    onGameSelect(game, document.querySelector("#right-summary"), "right");
+  },
 });
 
-const onGameSelect = async (game) => {
+let leftGame;
+let rightGame;
+const onGameSelect = async (game, summaryElement, side) => {
   const response = await axios.get(
     "https://www.cheapshark.com/api/1.0/games?",
     {
@@ -40,7 +55,21 @@ const onGameSelect = async (game) => {
   );
 
   console.log(response.data);
-  document.querySelector("#summary").innerHTML = gameTemplate(response.data);
+  summaryElement.innerHTML = gameTemplate(response.data);
+
+  if (side === "left") {
+    leftGame = response.data;
+  } else {
+    rightGame = response.data;
+  }
+
+  if (leftGame && rightGame) {
+    runComparison();
+  }
+};
+
+const runComparison = () => {
+  console.log("time to compares");
 };
 
 const gameTemplate = (gameDetail) => {
